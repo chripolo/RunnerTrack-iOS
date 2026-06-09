@@ -1,0 +1,106 @@
+import Foundation
+import SwiftData
+
+@Observable
+final class PlanViewModel {
+    private let profile: UserProfile
+    private(set) var weekSessions: [TrainingSession] = []
+
+    let templates = S01Catalog.sessions
+
+    init(profile: UserProfile) {
+        self.profile = profile
+    }
+
+    // MARK: - Persistencia de la semana
+
+    /// Crea las TrainingSession de la semana actual en SwiftData si no existen aún
+    func ensureWeekSessions(context: ModelContext) {
+        let weekStart = Self.mondayOfCurrentWeek()
+        guard let weekEnd = Calendar.current.date(byAdding: .day, value: 7, to: weekStart) else { return }
+
+        let predicate = #Predicate<TrainingSession> { $0.date >= weekStart && $0.date < weekEnd }
+        let existing = (try? context.fetch(FetchDescriptor(predicate: predicate))) ?? []
+
+        if existing.isEmpty {
+            for template in templates {
+                guard let date = Calendar.current.date(byAdding: .day, value: template.dayIndex, to: weekStart) else { continue }
+                let session = TrainingSession(
+                    date: date,
+                    type: template.type,
+                    plannedDuration: template.durationMin ?? 0,
+                    plannedZone: template.zone ?? .z1
+                )
+                context.insert(session)
+            }
+            try? context.save()
+            weekSessions = (try? context.fetch(FetchDescriptor(predicate: predicate))) ?? []
+        } else {
+            weekSessions = existing
+        }
+    }
+
+    private func storedSession(for template: SessionTemplate) -> TrainingSession? {
+        weekSessions.first { Self.dayIndex(of: $0.date) == template.dayIndex }
+    }
+
+    func isCompleted(_ template: SessionTemplate) -> Bool {
+        storedSession(for: template)?.completed ?? false
+    }
+
+    func toggleCompleted(_ template: SessionTemplate, context: ModelContext) {
+        guard let session = storedSession(for: template) else { return }
+        session.completed.toggle()
+        session.actualDuration = session.completed ? session.plannedDuration : nil
+        try? context.save()
+    }
+
+    // MARK: - Volumen semanal
+    // Estimación de km desde duración y ritmo Z2 del perfil
+
+    private func estimatedKm(_ template: SessionTemplate) -> Double {
+        guard let duration = template.durationMin, template.type != .strength, template.type != .rest else { return 0 }
+        return Double(duration) * 60.0 / profile.initialPaceZ2
+    }
+
+    var plannedKm: Double {
+        templates.reduce(0) { $0 + estimatedKm($1) }
+    }
+
+    var completedKm: Double {
+        templates.filter { isCompleted($0) }.reduce(0) { $0 + estimatedKm($1) }
+    }
+
+    var progress: Double {
+        plannedKm > 0 ? min(1.0, completedKm / plannedKm) : 0
+    }
+
+    // MARK: - Resumen semanal
+
+    var strengthSessionCount: Int {
+        templates.filter { !$0.exercises.isEmpty }.count
+    }
+
+    var qualitySessionCount: Int {
+        templates.filter { $0.type == .tempo || $0.type == .intervals }.count
+    }
+
+    func zoneRangeText(for zone: Zone) -> String? {
+        guard let threshold = profile.thresholdHR, let max = profile.maxHR else { return nil }
+        return FrielZoneCalculator.rangeText(for: zone, thresholdHR: threshold, maxHR: max)
+    }
+
+    // MARK: - Calendario
+
+    static func mondayOfCurrentWeek(from date: Date = .now) -> Date {
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2   // lunes
+        let start = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? date
+        return calendar.startOfDay(for: start)
+    }
+
+    /// Índice de día con lunes = 0
+    static func dayIndex(of date: Date) -> Int {
+        (Calendar.current.component(.weekday, from: date) + 5) % 7
+    }
+}
