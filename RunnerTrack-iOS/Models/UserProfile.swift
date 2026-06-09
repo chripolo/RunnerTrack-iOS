@@ -42,15 +42,33 @@ final class UserProfile {
 
         // Calcular maxHR y thresholdHR
         let resolvedMax = maxHR ?? (220 - age)
-        let resolvedThreshold = thresholdHR ?? Int(Double(resolvedMax) * 0.96)
+        let resolvedThreshold = thresholdHR ?? Int((Double(resolvedMax) * 0.96).rounded())
         self.maxHR = resolvedMax
         self.thresholdHR = resolvedThreshold
 
-        // Zonas Friel
-        self.zone1Max = Int(Double(resolvedThreshold) * 0.84)
-        self.zone2Max = Int(Double(resolvedThreshold) * 0.89)
-        self.zone3Max = Int(Double(resolvedThreshold) * 0.94)
-        self.zone4Max = Int(Double(resolvedThreshold) * 0.99)
-        self.zone5Max = resolvedMax
+        // Zonas Friel — se inicializan en recalculateZones()
+        self.zone1Max = 0
+        self.zone2Max = 0
+        self.zone3Max = 0
+        self.zone4Max = 0
+        self.zone5Max = 0
+        recalculateZones()
+    }
+
+    /// Actualiza los datos cardíacos y recalcula zonas — usado por el seed y futuros ajustes manuales
+    func updateHeartRateData(maxHR: Int, thresholdHR: Int) {
+        self.maxHR = maxHR
+        self.thresholdHR = thresholdHR
+        recalculateZones()
+    }
+
+    /// Zonas Friel según CLAUDE.md §5 — redondeo, no truncado (172 × 0.94 = 161.68 → 162)
+    private func recalculateZones() {
+        guard let threshold = thresholdHR, let max = maxHR else { return }
+        zone1Max = Int((Double(threshold) * 0.84).rounded())
+        zone2Max = Int((Double(threshold) * 0.89).rounded())
+        zone3Max = Int((Double(threshold) * 0.94).rounded())
+        zone4Max = Int((Double(threshold) * 0.99).rounded())
+        zone5Max = max
     }
 }
