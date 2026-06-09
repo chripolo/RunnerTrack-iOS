@@ -1,29 +1,51 @@
 import SwiftUI
 
 struct DashboardView: View {
+    let profile: UserProfile
     @State private var vm: DashboardViewModel
-    @State private var selectedSession: PlannedSessionPreview?
+    @State private var selectedSession: SessionTemplate?
+    @State private var showProfile = false
 
     init(profile: UserProfile) {
+        self.profile = profile
         _vm = State(initialValue: DashboardViewModel(profile: profile, healthService: HealthServiceFactory.make()))
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DS.Layout.sectionSpacing) {
-                header
-                raceCard
-                healthMetrics
-                zonesSection
-                weekSection
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Layout.sectionSpacing) {
+                    header
+                    raceCard
+                    healthMetrics
+                    alertCard
+                    weekSection
+                }
+                .padding(.horizontal, DS.Layout.screenPadding)
+                .padding(.bottom, 32)
             }
-            .padding(.horizontal, DS.Layout.screenPadding)
-            .padding(.bottom, 32)
-        }
-        .background(DS.Colors.background)
-        .task { await vm.loadHealthData() }
-        .sheet(item: $selectedSession) { session in
-            SessionDetailSheet(session: session)
+            .background(DS.Colors.background)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showProfile = true
+                    } label: {
+                        Image(systemName: "person.circle")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundStyle(DS.Colors.accent)
+                    }
+                }
+            }
+            .task { await vm.loadHealthData() }
+            .sheet(item: $selectedSession) { session in
+                SessionDetailSheet(
+                    template: session,
+                    zoneRangeText: session.zone.flatMap { vm.zoneRangeText(for: $0) }
+                )
+            }
+            .sheet(isPresented: $showProfile) {
+                ProfileView(profile: profile)
+            }
         }
     }
 
@@ -38,7 +60,6 @@ struct DashboardView: View {
                 .font(DS.Typo.screenTitle)
                 .foregroundStyle(DS.Colors.textPrimary)
         }
-        .padding(.top, 16)
     }
 
     // MARK: - Tarjeta de carrera objetivo
@@ -76,7 +97,7 @@ struct DashboardView: View {
         .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
     }
 
-    // MARK: - Métricas de salud (mock en DEBUG)
+    // MARK: - Métricas de salud
 
     private var healthMetrics: some View {
         HStack(spacing: 12) {
@@ -95,23 +116,25 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - Zonas Friel
+    // MARK: - Estado del motor de reglas
 
-    private var zonesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            SectionHeader(title: "Zonas Friel")
-            VStack(spacing: 0) {
-                ForEach(vm.zoneDisplays) { display in
-                    ZoneRow(zone: display.zone, name: display.name, rangeText: display.rangeText)
-                    if display.zone != .z5 {
-                        Divider().overlay(DS.Colors.divider)
-                    }
-                }
+    private var alertCard: some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(DS.Colors.alert(vm.alertLevel))
+                .frame(width: 12, height: 12)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(vm.alertLevel.title)
+                    .font(DS.Typo.rowTitle)
+                    .foregroundStyle(DS.Colors.textPrimary)
+                Text(vm.alertLevel.message)
+                    .font(DS.Typo.body)
+                    .foregroundStyle(DS.Colors.textSecondary)
             }
-            .padding(.horizontal, DS.Layout.cardPadding)
-            .padding(.vertical, 8)
-            .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
+            Spacer()
         }
+        .padding(DS.Layout.cardPadding)
+        .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
     }
 
     // MARK: - Esta semana (plan S01)
@@ -124,7 +147,7 @@ struct DashboardView: View {
                     Button {
                         selectedSession = session
                     } label: {
-                        SessionRowView(session: session)
+                        SessionRow(template: session)
                     }
                     .buttonStyle(.plain)
                     if session.id != vm.weekSessions.last?.id {
@@ -136,42 +159,5 @@ struct DashboardView: View {
             .padding(.vertical, 8)
             .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
         }
-    }
-}
-
-// MARK: - Fila de sesión semanal
-
-private struct SessionRowView: View {
-    let session: PlannedSessionPreview
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Capsule()
-                .fill(session.zone.map(DS.Colors.zone) ?? DS.Colors.textSecondary.opacity(0.3))
-                .frame(width: 4, height: 32)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(session.day)
-                    .font(DS.Typo.label)
-                    .tracking(1.0)
-                    .foregroundStyle(DS.Colors.textSecondary)
-                Text(session.title)
-                    .font(DS.Typo.rowTitle)
-                    .foregroundStyle(DS.Colors.textPrimary)
-            }
-
-            Spacer()
-
-            if let duration = session.durationMin {
-                Text("\(duration)'")
-                    .font(DS.Typo.metricSmall)
-                    .foregroundStyle(DS.Colors.textSecondary)
-            }
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(DS.Colors.textSecondary.opacity(0.5))
-        }
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
     }
 }

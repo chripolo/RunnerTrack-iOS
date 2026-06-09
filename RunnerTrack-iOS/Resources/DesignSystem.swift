@@ -26,6 +26,15 @@ enum DS {
         /// Separadores sutiles
         static let divider = Color.white.opacity(0.06)
 
+        /// Color por nivel de alerta del motor de reglas
+        static func alert(_ level: AlertLevel) -> Color {
+            switch level {
+            case .green: return Color(red: 0.239, green: 0.863, blue: 0.518)
+            case .yellow: return Color(red: 1.0, green: 0.839, blue: 0.039)
+            case .red: return Color(red: 1.0, green: 0.271, blue: 0.227)
+            }
+        }
+
         /// Color por zona de entrenamiento — frío a caliente
         static func zone(_ zone: Zone) -> Color {
             switch zone {
