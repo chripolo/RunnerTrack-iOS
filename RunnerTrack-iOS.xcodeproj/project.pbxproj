@@ -257,6 +257,7 @@
 				DEVELOPMENT_TEAM = 2RNDKTU4K4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RunnerTrack;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Necesitamos permisos para poder sincronizar tus datos";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -291,6 +292,7 @@
 				DEVELOPMENT_TEAM = 2RNDKTU4K4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RunnerTrack;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Necesitamos permisos para poder sincronizar tus datos";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
