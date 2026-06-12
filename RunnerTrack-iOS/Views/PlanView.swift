@@ -116,25 +116,20 @@ struct PlanView: View {
     private var weekSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title: "Resumen")
+            // Fila superior: volumen ocupa más espacio
             HStack(spacing: 12) {
                 MetricCard(
-                    icon: "point.topleft.down.curvedto.point.bottomright.up",
+                    icon: "figure.run",
                     label: "Planificado",
                     value: vm.plannedKm.formatted(.number.precision(.fractionLength(1))),
                     unit: "km"
                 )
-                MetricCard(
-                    icon: "dumbbell.fill",
-                    label: "Fuerza",
-                    value: "\(vm.strengthSessionCount)",
-                    unit: "sesiones"
-                )
-                MetricCard(
-                    icon: "bolt.fill",
-                    label: "Calidad",
-                    value: "\(vm.qualitySessionCount)",
-                    unit: "sesión"
-                )
+                .frame(maxWidth: .infinity)
+                VStack(spacing: 12) {
+                    MetricCard(icon: "dumbbell.fill", label: "Fuerza", value: "\(vm.strengthSessionCount)", unit: "ses.")
+                    MetricCard(icon: "bolt.fill", label: "Calidad", value: "\(vm.qualitySessionCount)", unit: "ses.")
+                }
+                .frame(maxWidth: 120)
             }
         }
     }

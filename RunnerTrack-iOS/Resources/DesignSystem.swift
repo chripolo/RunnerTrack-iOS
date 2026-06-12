@@ -114,16 +114,22 @@ struct MetricCard: View {
                     .foregroundStyle(DS.Colors.accent)
                 Text(label.uppercased())
                     .font(DS.Typo.label)
-                    .tracking(1.2)
+                    .tracking(0.8)
                     .foregroundStyle(DS.Colors.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(value)
                     .font(DS.Typo.metricMedium)
                     .foregroundStyle(DS.Colors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 Text(unit)
                     .font(DS.Typo.metricSmall)
                     .foregroundStyle(DS.Colors.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

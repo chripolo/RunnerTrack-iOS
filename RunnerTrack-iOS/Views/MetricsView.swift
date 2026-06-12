@@ -100,8 +100,10 @@ struct MetricsView: View {
                             .foregroundStyle(DS.Colors.accent)
                     }
             }
-            // Eje invertido: menor seg/km = más rápido = arriba
-            .chartYScale(domain: .automatic(includesZero: false, reversed: true))
+            // Eje invertido: menor seg/km = más rápido = arriba.
+            // Dominio explícito con margen para que la línea de objetivo no quede pegada al borde.
+            .chartYScale(domain: [470, 355])
+            .chartPlotStyle { $0.clipped() }
             .chartYAxis {
                 AxisMarks { value in
                     AxisGridLine().foregroundStyle(DS.Colors.divider)
@@ -134,9 +136,11 @@ struct MetricsView: View {
             SectionHeader(title: "FC reposo · última semana")
             Chart {
                 ForEach(vm.restingHRWeek) { point in
+                    // yStart en la base del dominio — sin esto la barra nace en 0 y desborda la tarjeta
                     BarMark(
                         x: .value("Día", point.day),
-                        y: .value("FC", point.bpm)
+                        yStart: .value("Base", 40),
+                        yEnd: .value("FC", point.bpm)
                     )
                     .foregroundStyle(DS.Colors.zone(.z1))
                     .cornerRadius(4)
@@ -152,6 +156,7 @@ struct MetricsView: View {
                     }
             }
             .chartYScale(domain: 40...56)
+            .chartPlotStyle { $0.clipped() }
             .chartYAxis {
                 AxisMarks { _ in
                     AxisGridLine().foregroundStyle(DS.Colors.divider)
