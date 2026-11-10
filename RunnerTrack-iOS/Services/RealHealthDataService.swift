@@ -1,10 +1,10 @@
 import Foundation
 import HealthKit
 
-/// Implementación real sobre HealthKit.
+/// Implementación real sobre HealthKit, aislada en un `actor` para proteger el estado de autorización.
 /// Permisos: se solicitan en el primer acceso a datos, nunca en init (CLAUDE.md §3).
 /// Cualquier fallo (sin permisos, sin datos, HealthKit no disponible) devuelve nil — nunca crash.
-final class RealHealthDataService: HealthDataService {
+actor RealHealthDataService: HealthDataService {
     private let store = HKHealthStore()
     private var authorizationRequested = false
 

@@ -17,8 +17,9 @@ final class MetricsViewModel {
     }
 
     func loadHealthData() async {
-        restingHR = await healthService.getRestingHR()
-        hrv = await healthService.getHRV()
+        async let resting = healthService.getRestingHR()
+        async let variability = healthService.getHRV()
+        (restingHR, hrv) = await (resting, variability)
         alertLevel = RulesEngine.evaluate(
             restingHR: restingHR,
             personalMeanRestingHR: personalMeanRestingHR,
