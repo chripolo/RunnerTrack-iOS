@@ -2,7 +2,11 @@ import SwiftUI
 import Charts
 
 struct MetricsView: View {
-    @State private var vm = MetricsViewModel(healthService: HealthServiceFactory.make())
+    @State private var vm: MetricsViewModel
+
+    init(healthService: HealthDataService) {
+        _vm = State(initialValue: MetricsViewModel(healthService: healthService))
+    }
 
     var body: some View {
         ScrollView {

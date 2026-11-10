@@ -6,9 +6,9 @@ struct DashboardView: View {
     @State private var selectedSession: SessionTemplate?
     @State private var showProfile = false
 
-    init(profile: UserProfile) {
+    init(profile: UserProfile, healthService: HealthDataService) {
         self.profile = profile
-        _vm = State(initialValue: DashboardViewModel(profile: profile, healthService: HealthServiceFactory.make()))
+        _vm = State(initialValue: DashboardViewModel(profile: profile, healthService: healthService))
     }
 
     var body: some View {
