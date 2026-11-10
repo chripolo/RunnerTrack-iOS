@@ -6,7 +6,7 @@ struct OnboardingWelcomeView: View {
             Spacer()
             Image(systemName: "figure.run.circle.fill")
                 .font(.system(size: 80))
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(DS.Colors.accent)
 
             VStack(spacing: 12) {
                 Text("Bienvenido a RunnerTrack")
@@ -15,7 +15,7 @@ struct OnboardingWelcomeView: View {
 
                 Text("Tu plan personalizado hacia el maratón.\nSin tecnología de por medio — solo tú y tu entrenamiento.")
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.Colors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }

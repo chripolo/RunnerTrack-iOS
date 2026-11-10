@@ -15,7 +15,7 @@ struct OnboardingAvailabilityView: View {
 
                 Text("Mínimo 3 para un plan efectivo.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.Colors.textSecondary)
             }
 
             Section("Instalaciones") {

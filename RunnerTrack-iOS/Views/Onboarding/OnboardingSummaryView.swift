@@ -30,7 +30,7 @@ struct OnboardingSummaryView: View {
 
             Section {
                 Text("Todo listo. Vamos a construir tu plan.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.Colors.textSecondary)
                     .font(.callout)
             }
         }
