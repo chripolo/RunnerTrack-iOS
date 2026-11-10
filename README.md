@@ -16,7 +16,7 @@ App iOS nativa para corredores principiantes que siguen un plan estructurado hac
 | Lectura de FC reposo, HRV, pasos y sueño (HealthKit) | Hecho, pendiente de validar en dispositivo |
 | Motor de alertas con rachas de varios días | Pendiente |
 | Tests del núcleo (zonas y reglas) y CI | Incluidos |
-| Migración a Swift 6 y aislamiento con `actor` | En curso (rama `feature/swift6-concurrency`) |
+| Migración a Swift 6 y aislamiento con `actor` | En curso: borrador en la rama `feature/swift6-concurrency`, pendiente de validar con Xcode y CI |
 | Sincronización con backend, WorkoutKit, IA | Fase 2 |
 
 ## Arquitectura
