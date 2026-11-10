@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-tests:
+    name: Tests del núcleo (SwiftPM)
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: swift test
+        run: swift test
+
+  ios-build:
+    name: Compilar app iOS (simulador)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Versión de Xcode
+        run: xcodebuild -version
+      - name: xcodebuild build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project RunnerTrack-iOS.xcodeproj \
+            -scheme RunnerTrack-iOS \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
