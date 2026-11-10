@@ -20,7 +20,7 @@ enum ProfileSeeder {
         #endif
     }
 
-    /// Corrige el perfil existente con los datos cardíacos y fecha reales
+    /// Corrige el perfil existente con los datos cardíacos y la fecha de ejemplo
     private static func correct(_ profile: UserProfile) {
         profile.updateHeartRateData(maxHR: 178, thresholdHR: 172)
         profile.targetDate = madridMarathonDate
