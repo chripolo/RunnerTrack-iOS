@@ -27,7 +27,7 @@ enum DS {
         static let divider = Color.white.opacity(0.06)
 
         /// Color por nivel de alerta del motor de reglas
-        static func alert(_ level: AlertLevel) -> Color {
+        @MainActor static func alert(_ level: AlertLevel) -> Color {
             switch level {
             case .green:  return Color(red: 0.000, green: 0.902, blue: 0.765) // Aurora Teal #00E6C3
             case .yellow: return Color(red: 1.000, green: 0.722, blue: 0.420) // Threshold   #FFB86B
@@ -36,7 +36,7 @@ enum DS {
         }
 
         /// Color por zona de entrenamiento Friel — paleta Aurora semántica
-        static func zone(_ zone: Zone) -> Color {
+        @MainActor static func zone(_ zone: Zone) -> Color {
             switch zone {
             case .z1: return Color(red: 0.522, green: 0.718, blue: 0.922) // Recovery  #85B7EB
             case .z2: return Color(red: 0.298, green: 0.961, blue: 0.824) // Aeróbico  #4CF5D2
