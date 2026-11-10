@@ -1,8 +1,8 @@
 import SwiftUI
 
 // =====================================================================
-// Sistema de diseño RunnerTrack — "Volt sobre asfalto"
-// Base oscura (asfalto nocturno) + un único acento volt eléctrico.
+// Sistema de diseño RunnerTrack — "Aurora sobre Océano"
+// Paleta Aurora: Deep Ocean + Aurora Teal como acento primario.
 // Toda View consume colores y tipografía desde aquí — nunca hardcodear.
 // =====================================================================
 
@@ -11,38 +11,38 @@ enum DS {
     // MARK: - Colores
 
     enum Colors {
-        /// Fondo principal — asfalto nocturno
-        static let background = Color(red: 0.051, green: 0.059, blue: 0.078)        // #0D0F14
-        /// Superficie de tarjeta
-        static let surface = Color(red: 0.086, green: 0.102, blue: 0.133)           // #161A22
+        /// Fondo principal — Deep Ocean
+        static let background = Color(red: 0.031, green: 0.102, blue: 0.114)        // #081A1D
+        /// Superficie de tarjeta — Ocean Surface
+        static let surface = Color(red: 0.063, green: 0.165, blue: 0.169)           // #102A2B
         /// Superficie elevada (sheets, filas destacadas)
-        static let surfaceElevated = Color(red: 0.125, green: 0.145, blue: 0.184)   // #20252F
-        /// Acento único de la app — volt eléctrico
-        static let accent = Color(red: 0.843, green: 1.0, blue: 0.243)              // #D7FF3E
-        /// Texto principal
-        static let textPrimary = Color(red: 0.949, green: 0.957, blue: 0.969)       // #F2F4F7
-        /// Texto secundario / etiquetas
-        static let textSecondary = Color(red: 0.541, green: 0.576, blue: 0.651)     // #8A93A6
+        static let surfaceElevated = Color(red: 0.094, green: 0.208, blue: 0.212)   // #183536
+        /// Acento principal — Aurora Teal
+        static let accent = Color(red: 0.000, green: 0.902, blue: 0.765)            // #00E6C3
+        /// Texto principal — Cloud
+        static let textPrimary = Color(red: 0.957, green: 0.965, blue: 0.973)       // #F4F6F8
+        /// Texto secundario / etiquetas — Mist
+        static let textSecondary = Color(red: 0.580, green: 0.580, blue: 0.659)     // #9494A8
         /// Separadores sutiles
         static let divider = Color.white.opacity(0.06)
 
         /// Color por nivel de alerta del motor de reglas
         static func alert(_ level: AlertLevel) -> Color {
             switch level {
-            case .green: return Color(red: 0.239, green: 0.863, blue: 0.518)
-            case .yellow: return Color(red: 1.0, green: 0.839, blue: 0.039)
-            case .red: return Color(red: 1.0, green: 0.271, blue: 0.227)
+            case .green:  return Color(red: 0.000, green: 0.902, blue: 0.765) // Aurora Teal #00E6C3
+            case .yellow: return Color(red: 1.000, green: 0.722, blue: 0.420) // Threshold   #FFB86B
+            case .red:    return Color(red: 0.941, green: 0.439, blue: 0.376) // Intervals   #F07060
             }
         }
 
-        /// Color por zona de entrenamiento — frío a caliente
+        /// Color por zona de entrenamiento Friel — paleta Aurora semántica
         static func zone(_ zone: Zone) -> Color {
             switch zone {
-            case .z1: return Color(red: 0.310, green: 0.639, blue: 1.0)    // azul recuperación
-            case .z2: return Color(red: 0.239, green: 0.863, blue: 0.518)  // verde aeróbico
-            case .z3: return Color(red: 1.0, green: 0.839, blue: 0.039)    // amarillo tempo
-            case .z4: return Color(red: 1.0, green: 0.624, blue: 0.039)    // naranja umbral
-            case .z5: return Color(red: 1.0, green: 0.271, blue: 0.227)    // rojo máximo
+            case .z1: return Color(red: 0.522, green: 0.718, blue: 0.922) // Recovery  #85B7EB
+            case .z2: return Color(red: 0.298, green: 0.961, blue: 0.824) // Aeróbico  #4CF5D2
+            case .z3: return Color(red: 0.655, green: 0.545, blue: 0.980) // Tempo     #A78BFA
+            case .z4: return Color(red: 1.000, green: 0.722, blue: 0.420) // Umbral    #FFB86B
+            case .z5: return Color(red: 0.941, green: 0.439, blue: 0.376) // Máximo    #F07060
             }
         }
     }
