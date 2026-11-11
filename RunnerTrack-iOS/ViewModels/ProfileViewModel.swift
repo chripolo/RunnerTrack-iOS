@@ -10,6 +10,7 @@ final class ProfileViewModel {
     var ageText: String
     var weightText: String
     var targetRace: RaceType
+    var goalTier: RaceGoalTier
     var targetDate: Date
     var maxHRText: String
     var thresholdHRText: String
@@ -21,6 +22,7 @@ final class ProfileViewModel {
         self.ageText = String(profile.age)
         self.weightText = String(format: "%.1f", profile.weight)
         self.targetRace = profile.targetRace
+        self.goalTier = profile.goalTier
         self.targetDate = profile.targetDate
         self.maxHRText = profile.maxHR.map(String.init) ?? ""
         self.thresholdHRText = profile.thresholdHR.map(String.init) ?? ""
@@ -52,6 +54,7 @@ final class ProfileViewModel {
         profile.age = age
         profile.weight = weight
         profile.targetRace = targetRace
+        profile.goalTier = goalTier
         profile.targetDate = targetDate
         profile.weeklyAvailableDays = weeklyAvailableDays
         profile.updateHeartRateData(maxHR: maxHR, thresholdHR: thresholdHR)

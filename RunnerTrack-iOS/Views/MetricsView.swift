@@ -5,6 +5,9 @@ import Charts
 struct MetricsView: View {
     @State private var vm: MetricsViewModel
     @Query private var allSessions: [TrainingSession]
+    @Query private var profiles: [UserProfile]
+
+    private var profile: UserProfile? { profiles.first }
 
     init(healthService: HealthDataService) {
         _vm = State(initialValue: MetricsViewModel(healthService: healthService))
@@ -26,10 +29,13 @@ struct MetricsView: View {
         .background(DS.Colors.background)
         .task {
             await vm.loadHealthData()
-            vm.updateWithSessions(allSessions)
+            vm.updateWithSessions(allSessions, profile: profile)
         }
         .onChange(of: allSessions) { _, sessions in
-            vm.updateWithSessions(sessions)
+            vm.updateWithSessions(sessions, profile: profile)
+        }
+        .onChange(of: profiles) { _, _ in
+            vm.updateWithSessions(allSessions, profile: profile)
         }
     }
 

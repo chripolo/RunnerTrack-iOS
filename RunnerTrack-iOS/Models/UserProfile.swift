@@ -7,6 +7,7 @@ final class UserProfile {
     var age: Int
     var weight: Double
     var targetRace: RaceType
+    var goalTier: RaceGoalTier          // conservador / moderado / ambicioso
     var targetDate: Date
     var initialPaceZ2: Double           // seg/km — resultado del test de onboarding
     var maxHR: Int?                     // manual o estimado: 220 - age
@@ -24,6 +25,7 @@ final class UserProfile {
         age: Int,
         weight: Double,
         targetRace: RaceType,
+        goalTier: RaceGoalTier = .conservative,
         targetDate: Date,
         initialPaceZ2: Double = 370,
         maxHR: Int? = nil,
@@ -35,6 +37,7 @@ final class UserProfile {
         self.age = age
         self.weight = weight
         self.targetRace = targetRace
+        self.goalTier = goalTier
         self.targetDate = targetDate
         self.initialPaceZ2 = initialPaceZ2
         self.hasGymAccess = hasGymAccess

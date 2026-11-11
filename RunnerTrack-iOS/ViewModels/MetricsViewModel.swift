@@ -20,7 +20,7 @@ final class MetricsViewModel {
     }
 
     var paceHistory: [PacePoint] = []
-    let targetPace: Double = 370
+    var targetPace: Double = 363       // actualizado por updateWithSessions
 
     // Dominio dinámico del gráfico de ritmo
     var paceDomainMin: Double { max(300, (paceHistory.map(\.secPerKm).min() ?? 355) - 20) }
@@ -81,7 +81,10 @@ final class MetricsViewModel {
     }
 
     /// Actualiza todas las métricas calculadas a partir de las TrainingSession en SwiftData
-    func updateWithSessions(_ sessions: [TrainingSession]) {
+    func updateWithSessions(_ sessions: [TrainingSession], profile: UserProfile? = nil) {
+        if let profile {
+            targetPace = profile.goalTier.targetPace(for: profile.targetRace)
+        }
         let completed = sessions.filter(\.completed)
 
         // Ritmo Z2 histórico

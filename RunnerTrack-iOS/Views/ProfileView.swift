@@ -37,6 +37,11 @@ struct ProfileView: View {
                             Text(race.rawValue).tag(race)
                         }
                     }
+                    Picker("Nivel", selection: $vm.goalTier) {
+                        ForEach(RaceGoalTier.allCases, id: \.self) { tier in
+                            Text("\(tier.rawValue) · \(tier.finishTime(for: vm.targetRace))").tag(tier)
+                        }
+                    }
                     DatePicker("Fecha objetivo", selection: $vm.targetDate, in: Date.now..., displayedComponents: .date)
                 }
 

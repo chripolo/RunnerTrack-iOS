@@ -7,6 +7,7 @@ final class OnboardingViewModel {
     var age: String = ""
     var weight: String = ""
     var targetRace: RaceType = .marathon
+    var goalTier: RaceGoalTier = .conservative
     var targetDate: Date = Calendar.current.date(byAdding: .year, value: 1, to: .now) ?? .now
     var weeklyAvailableDays: Int = 4
     var hasGymAccess: Bool = false
@@ -87,6 +88,7 @@ final class OnboardingViewModel {
             age: ageInt,
             weight: weightDouble,
             targetRace: targetRace,
+            goalTier: goalTier,
             targetDate: targetDate,
             weeklyAvailableDays: weeklyAvailableDays,
             hasGymAccess: hasGymAccess
