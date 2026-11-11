@@ -46,7 +46,9 @@ final class MetricsViewModel {
         let weekStart: Date
         let km: Double
         var label: String {
-            weekStart.formatted(.dateTime.month(.abbreviated).day().locale(Locale(identifier: "es_ES")))
+            let d = Calendar.current.component(.day, from: weekStart)
+            let m = Calendar.current.component(.month, from: weekStart)
+            return "\(d)/\(m)"
         }
     }
 
