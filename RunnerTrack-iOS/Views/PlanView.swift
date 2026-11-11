@@ -6,6 +6,7 @@ struct PlanView: View {
     @State private var vm: PlanViewModel
     @State private var selectedSession: SessionTemplate?
     @State private var activeConflict: WorkoutConflict?
+    @State private var summaryFilter: SummaryFilter?
 
     init(profile: UserProfile, healthService: HealthDataService) {
         _vm = State(initialValue: PlanViewModel(profile: profile, healthService: healthService))
@@ -143,21 +144,38 @@ struct PlanView: View {
     private var weekSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title: "Resumen")
-            // Fila superior: volumen ocupa más espacio
             HStack(spacing: 12) {
-                MetricCard(
-                    icon: "figure.run",
-                    label: "Planificado",
-                    value: vm.plannedKm.formatted(.number.precision(.fractionLength(1))),
-                    unit: "km"
-                )
+                Button { summaryFilter = .volume } label: {
+                    MetricCard(
+                        icon: "figure.run",
+                        label: "Planificado",
+                        value: vm.plannedKm.formatted(.number.precision(.fractionLength(1))),
+                        unit: "km"
+                    )
+                }
+                .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
+
                 VStack(spacing: 12) {
-                    MetricCard(icon: "dumbbell.fill", label: "Fuerza", value: "\(vm.strengthSessionCount)", unit: "ses.")
-                    MetricCard(icon: "bolt.fill", label: "Calidad", value: "\(vm.qualitySessionCount)", unit: "ses.")
+                    Button { summaryFilter = .strength } label: {
+                        MetricCard(icon: "dumbbell.fill", label: "Fuerza", value: "\(vm.strengthSessionCount)", unit: "ses.")
+                    }
+                    .buttonStyle(.plain)
+
+                    Button { summaryFilter = .quality } label: {
+                        MetricCard(icon: "bolt.fill", label: "Calidad", value: "\(vm.qualitySessionCount)", unit: "ses.")
+                    }
+                    .buttonStyle(.plain)
                 }
                 .frame(maxWidth: 120)
             }
+        }
+        .sheet(item: $summaryFilter) { filter in
+            WeekSummarySheet(
+                filter: filter,
+                templates: vm.templates,
+                weekSessions: vm.weekSessions
+            )
         }
     }
 }
