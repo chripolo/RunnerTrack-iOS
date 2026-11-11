@@ -5,6 +5,7 @@ struct PlanView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var vm: PlanViewModel
     @State private var selectedSession: SessionTemplate?
+    @State private var activeConflict: WorkoutConflict?
 
     init(profile: UserProfile, healthService: HealthDataService) {
         _vm = State(initialValue: PlanViewModel(profile: profile, healthService: healthService))
@@ -39,6 +40,15 @@ struct PlanView: View {
             }
         }
         .onAppear { vm.ensureWeekSessions(context: modelContext) }
+        .onChange(of: vm.pendingConflicts) { _, conflicts in
+            if activeConflict == nil { activeConflict = conflicts.first }
+        }
+        .sheet(item: $activeConflict) { conflict in
+            WorkoutConflictSheet(conflict: conflict) { chosen in
+                vm.resolveConflict(conflict, with: chosen, context: modelContext)
+                activeConflict = vm.pendingConflicts.first
+            }
+        }
         .sheet(item: $selectedSession) { template in
             SessionDetailSheet(
                 template: template,

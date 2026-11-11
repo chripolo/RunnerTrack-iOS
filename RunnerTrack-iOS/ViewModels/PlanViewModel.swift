@@ -8,6 +8,7 @@ final class PlanViewModel {
     private(set) var weekSessions: [TrainingSession] = []
     private(set) var isImporting = false
     private(set) var lastImportedCount: Int? = nil
+    private(set) var pendingConflicts: [WorkoutConflict] = []
 
     let templates = S01Catalog.sessions
 
@@ -61,23 +62,46 @@ final class PlanViewModel {
 
     // MARK: - Importación desde HealthKit
 
-    /// Lee workouts de running de los últimos 90 días y crea TrainingSession por cada día nuevo
+    /// Importa workouts de running: empareja con sesiones planificadas; crea nuevas para los no planificados.
+    /// Si hay varios workouts un mismo día, deja un conflicto pendiente para que el usuario elija.
     func importFromHealthKit(context: ModelContext) async {
         isImporting = true
         lastImportedCount = nil
+        pendingConflicts = []
+
         let workouts = await healthService.getRecentWorkouts(limit: 50)
-        let count = WorkoutImporter.importWorkouts(workouts, into: context)
-        // Recargar sesiones de la semana actual tras la importación
+
+        // 1. Emparejar con sesiones planificadas de la semana
+        let result = WorkoutImporter.matchAndApply(workouts, against: weekSessions, context: context)
+        pendingConflicts = result.conflicts
+
+        // 2. Crear nuevas sesiones para workouts fuera del plan
+        let extraCount = WorkoutImporter.importUnmatched(result.unmatched, into: context)
+
+        // 3. Recargar sesiones de la semana
         let weekStart = Self.mondayOfCurrentWeek()
         guard let weekEnd = Calendar.current.date(byAdding: .day, value: 7, to: weekStart) else {
             isImporting = false
-            lastImportedCount = count
             return
         }
         let predicate = #Predicate<TrainingSession> { $0.date >= weekStart && $0.date < weekEnd }
         weekSessions = (try? context.fetch(FetchDescriptor(predicate: predicate))) ?? []
-        lastImportedCount = count
+        lastImportedCount = (workouts.count - result.conflicts.reduce(0) { $0 + $1.candidates.count }) + extraCount
         isImporting = false
+    }
+
+    /// Resuelve un conflicto: aplica el workout elegido (nil = saltar sin marcar completada)
+    func resolveConflict(_ conflict: WorkoutConflict, with workout: HealthWorkout?, context: ModelContext) {
+        if let workout {
+            WorkoutImporter.applyWorkout(workout, to: conflict.session)
+            try? context.save()
+        }
+        pendingConflicts.removeAll { $0.id == conflict.id }
+        // Recargar para reflejar cambios
+        let weekStart = Self.mondayOfCurrentWeek()
+        guard let weekEnd = Calendar.current.date(byAdding: .day, value: 7, to: weekStart) else { return }
+        let predicate = #Predicate<TrainingSession> { $0.date >= weekStart && $0.date < weekEnd }
+        weekSessions = (try? context.fetch(FetchDescriptor(predicate: predicate))) ?? []
     }
 
     // MARK: - Volumen semanal
