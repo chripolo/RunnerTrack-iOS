@@ -134,6 +134,41 @@ final class RealHealthDataService: HealthDataService {
         }
     }
 
+    /// FC reposo de los últimos N días — una muestra por día
+    func getDailyRestingHR(days: Int) async -> [(date: Date, bpm: Int)] {
+        guard await ensureAuthorization() else { return [] }
+        let start = Calendar.current.date(byAdding: .day, value: -days, to: .now) ?? .now
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now)
+        let sort = [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: true)]
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: HKQuantityType(.restingHeartRate),
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: sort
+            ) { _, samples, _ in
+                guard let samples = samples as? [HKQuantitySample] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                let bpmUnit = HKUnit.count().unitDivided(by: .minute())
+                var byDay: [Date: Int] = [:]
+                for sample in samples {
+                    let day = Calendar.current.startOfDay(for: sample.endDate)
+                    if byDay[day] == nil {
+                        byDay[day] = Int(sample.quantity.doubleValue(for: bpmUnit).rounded())
+                    }
+                }
+                let result = byDay
+                    .map { (date: $0.key, bpm: $0.value) }
+                    .sorted { $0.date < $1.date }
+                continuation.resume(returning: result)
+            }
+            self.store.execute(query)
+        }
+    }
+
     // MARK: - Helpers
 
     /// Muestra más reciente de un tipo cuantitativo

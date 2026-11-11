@@ -16,5 +16,14 @@ struct MockHealthDataService: HealthDataService {
             HealthWorkout(id: UUID(), date: now.addingTimeInterval(-7 * 86400), durationMinutes: 72, distanceKm: 11.5, avgHR: 145),
         ]
     }
+
+    func getDailyRestingHR(days: Int) async -> [(date: Date, bpm: Int)] {
+        let today = Calendar.current.startOfDay(for: .now)
+        let mockBPM = [47, 48, 49, 47, 48, 46, 48]
+        return (0..<min(days, 7)).compactMap { offset in
+            guard let date = Calendar.current.date(byAdding: .day, value: -(days - 1 - offset), to: today) else { return nil }
+            return (date: date, bpm: mockBPM[offset % mockBPM.count])
+        }
+    }
 }
 #endif

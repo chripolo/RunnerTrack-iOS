@@ -1,8 +1,10 @@
 import SwiftUI
+import SwiftData
 import Charts
 
 struct MetricsView: View {
     @State private var vm: MetricsViewModel
+    @Query private var allSessions: [TrainingSession]
 
     init(healthService: HealthDataService) {
         _vm = State(initialValue: MetricsViewModel(healthService: healthService))
@@ -14,6 +16,7 @@ struct MetricsView: View {
                 title
                 todaySection
                 paceChartSection
+                weeklyVolumeSection
                 restingHRSection
                 statsSection
             }
@@ -21,7 +24,13 @@ struct MetricsView: View {
             .padding(.bottom, 32)
         }
         .background(DS.Colors.background)
-        .task { await vm.loadHealthData() }
+        .task {
+            await vm.loadHealthData()
+            vm.updateWithSessions(allSessions)
+        }
+        .onChange(of: allSessions) { _, sessions in
+            vm.updateWithSessions(sessions)
+        }
     }
 
     private var title: some View {
@@ -78,58 +87,98 @@ struct MetricsView: View {
     private var paceChartSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title: "Progresión ritmo Z2")
-            Chart {
-                ForEach(vm.paceHistory) { point in
-                    LineMark(
-                        x: .value("Fecha", point.date),
-                        y: .value("Ritmo", point.secPerKm)
-                    )
-                    .foregroundStyle(DS.Colors.zone(.z2))
-                    .interpolationMethod(.catmullRom)
+            if vm.paceHistory.isEmpty {
+                emptyChartPlaceholder(message: "Importa tus entrenos para ver la progresión")
+            } else {
+                Chart {
+                    ForEach(vm.paceHistory) { point in
+                        LineMark(
+                            x: .value("Fecha", point.date),
+                            y: .value("Ritmo", point.secPerKm)
+                        )
+                        .foregroundStyle(DS.Colors.zone(.z2))
+                        .interpolationMethod(.catmullRom)
 
-                    PointMark(
-                        x: .value("Fecha", point.date),
-                        y: .value("Ritmo", point.secPerKm)
-                    )
-                    .foregroundStyle(DS.Colors.zone(.z2))
-                    .symbolSize(40)
-                }
-
-                RuleMark(y: .value("Objetivo", vm.targetPace))
-                    .foregroundStyle(DS.Colors.accent)
-                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
-                    .annotation(position: .bottom, alignment: .trailing) {
-                        Text("Objetivo \(MetricsViewModel.paceString(vm.targetPace))")
-                            .font(DS.Typo.label)
-                            .foregroundStyle(DS.Colors.accent)
+                        PointMark(
+                            x: .value("Fecha", point.date),
+                            y: .value("Ritmo", point.secPerKm)
+                        )
+                        .foregroundStyle(DS.Colors.zone(.z2))
+                        .symbolSize(40)
                     }
-            }
-            // Eje invertido: menor seg/km = más rápido = arriba.
-            // Dominio explícito con margen para que la línea de objetivo no quede pegada al borde.
-            .chartYScale(domain: [470, 355])
-            .chartPlotStyle { $0.clipped() }
-            .chartYAxis {
-                AxisMarks { value in
-                    AxisGridLine().foregroundStyle(DS.Colors.divider)
-                    AxisValueLabel {
-                        if let pace = value.as(Double.self) {
-                            Text(MetricsViewModel.paceString(pace))
+
+                    RuleMark(y: .value("Objetivo", vm.targetPace))
+                        .foregroundStyle(DS.Colors.accent)
+                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
+                        .annotation(position: .bottom, alignment: .trailing) {
+                            Text("Objetivo \(MetricsViewModel.paceString(vm.targetPace))")
                                 .font(DS.Typo.label)
-                                .foregroundStyle(DS.Colors.textSecondary)
+                                .foregroundStyle(DS.Colors.accent)
+                        }
+                }
+                .chartYScale(domain: [vm.paceDomainMax, vm.paceDomainMin])
+                .chartPlotStyle { $0.clipped() }
+                .chartYAxis {
+                    AxisMarks { value in
+                        AxisGridLine().foregroundStyle(DS.Colors.divider)
+                        AxisValueLabel {
+                            if let pace = value.as(Double.self) {
+                                Text(MetricsViewModel.paceString(pace))
+                                    .font(DS.Typo.label)
+                                    .foregroundStyle(DS.Colors.textSecondary)
+                            }
                         }
                     }
                 }
-            }
-            .chartXAxis {
-                AxisMarks(values: .stride(by: .month)) { _ in
-                    AxisGridLine().foregroundStyle(DS.Colors.divider)
-                    AxisValueLabel(format: .dateTime.month(.abbreviated).locale(Locale(identifier: "es_ES")))
-                        .foregroundStyle(DS.Colors.textSecondary)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .month)) { _ in
+                        AxisGridLine().foregroundStyle(DS.Colors.divider)
+                        AxisValueLabel(format: .dateTime.month(.abbreviated).locale(Locale(identifier: "es_ES")))
+                            .foregroundStyle(DS.Colors.textSecondary)
+                    }
                 }
+                .frame(height: 220)
+                .padding(DS.Layout.cardPadding)
+                .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
             }
-            .frame(height: 220)
-            .padding(DS.Layout.cardPadding)
-            .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
+        }
+    }
+
+    // MARK: - Volumen semanal
+
+    private var weeklyVolumeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(title: "Volumen semanal · 12 semanas")
+            if vm.weeklyVolume.isEmpty {
+                emptyChartPlaceholder(message: "Sin entrenamientos registrados")
+            } else {
+                Chart {
+                    ForEach(vm.weeklyVolume) { point in
+                        BarMark(
+                            x: .value("Semana", point.label),
+                            y: .value("km", point.km)
+                        )
+                        .foregroundStyle(DS.Colors.accent.gradient)
+                        .cornerRadius(4)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks { _ in
+                        AxisGridLine().foregroundStyle(DS.Colors.divider)
+                        AxisValueLabel().foregroundStyle(DS.Colors.textSecondary)
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel()
+                            .font(DS.Typo.label)
+                            .foregroundStyle(DS.Colors.textSecondary)
+                    }
+                }
+                .frame(height: 180)
+                .padding(DS.Layout.cardPadding)
+                .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
+            }
         }
     }
 
@@ -138,43 +187,48 @@ struct MetricsView: View {
     private var restingHRSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title: "FC reposo · última semana")
-            Chart {
-                ForEach(vm.restingHRWeek) { point in
-                    // yStart en la base del dominio — sin esto la barra nace en 0 y desborda la tarjeta
-                    BarMark(
-                        x: .value("Día", point.day),
-                        yStart: .value("Base", 40),
-                        yEnd: .value("FC", point.bpm)
-                    )
-                    .foregroundStyle(DS.Colors.zone(.z1))
-                    .cornerRadius(4)
-                }
-
-                RuleMark(y: .value("Alerta", vm.restingAlertThreshold))
-                    .foregroundStyle(DS.Colors.zone(.z5))
-                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
-                    .annotation(position: .top, alignment: .trailing) {
-                        Text("Alerta \(vm.restingAlertThreshold) bpm")
-                            .font(DS.Typo.label)
-                            .foregroundStyle(DS.Colors.zone(.z5))
+            if vm.restingHRWeek.isEmpty {
+                emptyChartPlaceholder(message: "Sin datos de FC reposo")
+            } else {
+                let minBPM = Double((vm.restingHRWeek.map(\.bpm).min() ?? 40) - 4)
+                let maxBPM = Double((vm.restingHRWeek.map(\.bpm).max() ?? 56) + 4)
+                Chart {
+                    ForEach(vm.restingHRWeek) { point in
+                        BarMark(
+                            x: .value("Día", point.day),
+                            yStart: .value("Base", minBPM),
+                            yEnd: .value("FC", Double(point.bpm))
+                        )
+                        .foregroundStyle(DS.Colors.zone(.z1))
+                        .cornerRadius(4)
                     }
-            }
-            .chartYScale(domain: 40...56)
-            .chartPlotStyle { $0.clipped() }
-            .chartYAxis {
-                AxisMarks { _ in
-                    AxisGridLine().foregroundStyle(DS.Colors.divider)
-                    AxisValueLabel().foregroundStyle(DS.Colors.textSecondary)
+
+                    RuleMark(y: .value("Alerta", vm.restingAlertThreshold))
+                        .foregroundStyle(DS.Colors.zone(.z5))
+                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
+                        .annotation(position: .top, alignment: .trailing) {
+                            Text("Alerta \(vm.restingAlertThreshold) bpm")
+                                .font(DS.Typo.label)
+                                .foregroundStyle(DS.Colors.zone(.z5))
+                        }
                 }
-            }
-            .chartXAxis {
-                AxisMarks { _ in
-                    AxisValueLabel().foregroundStyle(DS.Colors.textSecondary)
+                .chartYScale(domain: minBPM...maxBPM)
+                .chartPlotStyle { $0.clipped() }
+                .chartYAxis {
+                    AxisMarks { _ in
+                        AxisGridLine().foregroundStyle(DS.Colors.divider)
+                        AxisValueLabel().foregroundStyle(DS.Colors.textSecondary)
+                    }
                 }
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel().foregroundStyle(DS.Colors.textSecondary)
+                    }
+                }
+                .frame(height: 180)
+                .padding(DS.Layout.cardPadding)
+                .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
             }
-            .frame(height: 180)
-            .padding(DS.Layout.cardPadding)
-            .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
         }
     }
 
@@ -182,7 +236,7 @@ struct MetricsView: View {
 
     private var statsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader(title: "Acumulado · 12 semanas")
+            SectionHeader(title: "Acumulado · 90 días")
             VStack(spacing: 12) {
                 HStack(spacing: 12) {
                     MetricCard(icon: "point.topleft.down.curvedto.point.bottomright.up", label: "Distancia", value: vm.totalDistanceKm.formatted(.number.precision(.fractionLength(0))), unit: "km")
@@ -194,5 +248,26 @@ struct MetricsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Placeholder
+
+    private func emptyChartPlaceholder(message: String) -> some View {
+        HStack {
+            Spacer()
+            VStack(spacing: 8) {
+                Image(systemName: "chart.xyaxis.line")
+                    .font(.system(size: 28))
+                    .foregroundStyle(DS.Colors.textSecondary.opacity(0.4))
+                Text(message)
+                    .font(DS.Typo.body)
+                    .foregroundStyle(DS.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+        }
+        .frame(height: 100)
+        .padding(DS.Layout.cardPadding)
+        .background(DS.Colors.surface, in: RoundedRectangle(cornerRadius: DS.Layout.cardCornerRadius))
     }
 }
