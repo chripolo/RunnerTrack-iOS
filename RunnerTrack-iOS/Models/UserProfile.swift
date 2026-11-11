@@ -7,7 +7,7 @@ final class UserProfile {
     var age: Int
     var weight: Double
     var targetRace: RaceType
-    var goalTier: RaceGoalTier          // conservador / moderado / ambicioso
+    var goalTier: RaceGoalTier = .conservative  // conservador / moderado / ambicioso
     var targetDate: Date
     var initialPaceZ2: Double           // seg/km — resultado del test de onboarding
     var maxHR: Int?                     // manual o estimado: 220 - age
