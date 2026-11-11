@@ -6,6 +6,7 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var vm: ProfileViewModel
+    @AppStorage("weekStartDay") private var weekStartDay: Int = 2
 
     init(profile: UserProfile) {
         _vm = State(initialValue: ProfileViewModel(profile: profile))
@@ -72,6 +73,17 @@ struct ProfileView: View {
 
                 Section("Disponibilidad") {
                     Stepper("\(vm.weeklyAvailableDays) días por semana", value: $vm.weeklyAvailableDays, in: 3...5)
+                }
+
+                Section {
+                    Picker("La semana empieza el", selection: $weekStartDay) {
+                        Text("Lunes").tag(2)
+                        Text("Domingo").tag(1)
+                    }
+                } header: {
+                    Text("Ajustes")
+                } footer: {
+                    Text("El volumen semanal y el plan se calculan desde el inicio de semana configurado.")
                 }
             }
             .scrollContentBackground(.hidden)

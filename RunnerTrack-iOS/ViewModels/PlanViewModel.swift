@@ -93,7 +93,13 @@ final class PlanViewModel {
     }
 
     var completedKm: Double {
-        templates.filter { isCompleted($0) }.reduce(0) { $0 + estimatedKm($1) }
+        templates.filter { isCompleted($0) }.reduce(0.0) { sum, t in
+            // Priorizar distancia real de HealthKit si existe
+            if let session = storedSession(for: t), let dist = session.distance {
+                return sum + dist
+            }
+            return sum + estimatedKm(t)
+        }
     }
 
     var progress: Double {
@@ -117,9 +123,11 @@ final class PlanViewModel {
 
     // MARK: - Calendario
 
+    /// Inicio de la semana actual respetando la preferencia del usuario (UserDefaults "weekStartDay")
     static func mondayOfCurrentWeek(from date: Date = .now) -> Date {
+        let saved = UserDefaults.standard.integer(forKey: "weekStartDay")
         var calendar = Calendar.current
-        calendar.firstWeekday = 2   // lunes
+        calendar.firstWeekday = saved > 0 ? saved : 2  // 2 = lunes por defecto
         let start = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? date
         return calendar.startOfDay(for: start)
     }
