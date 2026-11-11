@@ -6,8 +6,8 @@ struct PlanView: View {
     @State private var vm: PlanViewModel
     @State private var selectedSession: SessionTemplate?
 
-    init(profile: UserProfile) {
-        _vm = State(initialValue: PlanViewModel(profile: profile))
+    init(profile: UserProfile, healthService: HealthDataService) {
+        _vm = State(initialValue: PlanViewModel(profile: profile, healthService: healthService))
     }
 
     var body: some View {
@@ -22,6 +22,22 @@ struct PlanView: View {
             .padding(.bottom, 32)
         }
         .background(DS.Colors.background)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await vm.importFromHealthKit(context: modelContext) }
+                } label: {
+                    if vm.isImporting {
+                        ProgressView().tint(DS.Colors.accent)
+                    } else {
+                        Label("Sync Apple Health", systemImage: "arrow.triangle.2.circlepath")
+                            .labelStyle(.iconOnly)
+                            .foregroundStyle(DS.Colors.accent)
+                    }
+                }
+                .disabled(vm.isImporting)
+            }
+        }
         .onAppear { vm.ensureWeekSessions(context: modelContext) }
         .sheet(item: $selectedSession) { session in
             SessionDetailSheet(

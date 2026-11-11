@@ -4,12 +4,16 @@ import SwiftData
 @Observable
 final class PlanViewModel {
     private let profile: UserProfile
+    private let healthService: HealthDataService
     private(set) var weekSessions: [TrainingSession] = []
+    private(set) var isImporting = false
+    private(set) var lastImportedCount: Int? = nil
 
     let templates = S01Catalog.sessions
 
-    init(profile: UserProfile) {
+    init(profile: UserProfile, healthService: HealthDataService) {
         self.profile = profile
+        self.healthService = healthService
     }
 
     // MARK: - Persistencia de la semana
@@ -53,6 +57,27 @@ final class PlanViewModel {
         session.completed.toggle()
         session.actualDuration = session.completed ? session.plannedDuration : nil
         try? context.save()
+    }
+
+    // MARK: - Importación desde HealthKit
+
+    /// Lee workouts de running de los últimos 90 días y crea TrainingSession por cada día nuevo
+    func importFromHealthKit(context: ModelContext) async {
+        isImporting = true
+        lastImportedCount = nil
+        let workouts = await healthService.getRecentWorkouts(limit: 50)
+        let count = WorkoutImporter.importWorkouts(workouts, into: context)
+        // Recargar sesiones de la semana actual tras la importación
+        let weekStart = Self.mondayOfCurrentWeek()
+        guard let weekEnd = Calendar.current.date(byAdding: .day, value: 7, to: weekStart) else {
+            isImporting = false
+            lastImportedCount = count
+            return
+        }
+        let predicate = #Predicate<TrainingSession> { $0.date >= weekStart && $0.date < weekEnd }
+        weekSessions = (try? context.fetch(FetchDescriptor(predicate: predicate))) ?? []
+        lastImportedCount = count
+        isImporting = false
     }
 
     // MARK: - Volumen semanal

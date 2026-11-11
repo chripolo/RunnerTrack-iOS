@@ -14,6 +14,7 @@ final class RealHealthDataService: HealthDataService {
             HKQuantityType(.heartRateVariabilitySDNN),
             HKQuantityType(.stepCount),
             HKCategoryType(.sleepAnalysis),
+            HKWorkoutType.workoutType(),
         ]
     }
 
@@ -86,6 +87,50 @@ final class RealHealthDataService: HealthDataService {
                 continuation.resume(returning: seconds > 0 ? seconds / 3600.0 : nil)
             }
             store.execute(query)
+        }
+    }
+
+    /// Entrenos de running de los últimos 90 días, ordenados del más reciente al más antiguo
+    func getRecentWorkouts(limit: Int) async -> [HealthWorkout] {
+        guard await ensureAuthorization() else { return [] }
+        let ninetyDaysAgo = Calendar.current.date(byAdding: .day, value: -90, to: .now) ?? .now
+        let predicate = HKQuery.predicateForSamples(withStart: ninetyDaysAgo, end: .now)
+        let sort = [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: HKWorkoutType.workoutType(),
+                predicate: predicate,
+                limit: limit,
+                sortDescriptors: sort
+            ) { _, samples, _ in
+                guard let workouts = samples as? [HKWorkout] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                let result: [HealthWorkout] = workouts
+                    .filter { $0.workoutActivityType == .running }
+                    .compactMap { workout -> HealthWorkout? in
+                        let durationMin = Int(workout.duration / 60)
+                        guard durationMin >= 5 else { return nil }
+                        let distanceKm = workout.totalDistance
+                            .map { $0.doubleValue(for: .meterUnit(with: .kilo)) }
+                        let avgHR = workout.statistics(for: HKQuantityType(.heartRate))
+                            .flatMap { stats -> Int? in
+                                guard let qty = stats.averageQuantity() else { return nil }
+                                return Int(qty.doubleValue(for: HKUnit(from: "count/min")).rounded())
+                            }
+                        return HealthWorkout(
+                            id: workout.uuid,
+                            date: workout.startDate,
+                            durationMinutes: durationMin,
+                            distanceKm: distanceKm,
+                            avgHR: avgHR
+                        )
+                    }
+                continuation.resume(returning: result)
+            }
+            self.store.execute(query)
         }
     }
 

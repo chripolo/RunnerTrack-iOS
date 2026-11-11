@@ -8,4 +8,5 @@ protocol HealthDataService {
     func getHRV() async -> Double?
     func getSteps() async -> Int?
     func getSleepHours() async -> Double?
+    func getRecentWorkouts(limit: Int) async -> [HealthWorkout]
 }

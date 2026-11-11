@@ -9,7 +9,7 @@ struct MainTabView: View {
             DashboardView(profile: profile, healthService: healthService)
                 .tabItem { Label("Inicio", systemImage: "house.fill") }
 
-            PlanView(profile: profile)
+            PlanView(profile: profile, healthService: healthService)
                 .tabItem { Label("Plan", systemImage: "calendar") }
 
             MetricsView(healthService: healthService)
