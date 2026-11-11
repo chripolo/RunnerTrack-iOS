@@ -4,6 +4,7 @@ import Foundation
 // La app inyecta Mock en DEBUG y Real en RELEASE desde el entry point.
 
 protocol HealthDataService {
+    func requestAuthorization() async -> Bool
     func getRestingHR() async -> Int?
     func getHRV() async -> Double?
     func getSteps() async -> Int?

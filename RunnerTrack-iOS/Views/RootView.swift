@@ -12,7 +12,7 @@ struct RootView: View {
             if let profile = profiles.first {
                 MainTabView(profile: profile, healthService: healthService)
             } else {
-                OnboardingContainerView()
+                OnboardingContainerView(healthService: healthService)
             }
         }
         .preferredColorScheme(.dark)

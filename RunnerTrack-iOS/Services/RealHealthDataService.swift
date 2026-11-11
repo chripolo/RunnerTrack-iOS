@@ -33,6 +33,10 @@ final class RealHealthDataService: HealthDataService {
 
     // MARK: - HealthDataService
 
+    func requestAuthorization() async -> Bool {
+        await ensureAuthorization()
+    }
+
     func getRestingHR() async -> Int? {
         guard let sample = await latestQuantitySample(.restingHeartRate) else { return nil }
         let bpm = sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
