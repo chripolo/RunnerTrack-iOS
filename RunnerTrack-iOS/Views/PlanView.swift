@@ -39,12 +39,13 @@ struct PlanView: View {
             }
         }
         .onAppear { vm.ensureWeekSessions(context: modelContext) }
-        .sheet(item: $selectedSession) { session in
+        .sheet(item: $selectedSession) { template in
             SessionDetailSheet(
-                template: session,
-                zoneRangeText: session.zone.flatMap { vm.zoneRangeText(for: $0) },
-                isCompleted: vm.isCompleted(session),
-                onToggleComplete: { vm.toggleCompleted(session, context: modelContext) }
+                template: template,
+                zoneRangeText: template.zone.flatMap { vm.zoneRangeText(for: $0) },
+                isCompleted: vm.isCompleted(template),
+                onToggleComplete: { vm.toggleCompleted(template, context: modelContext) },
+                session: vm.storedSession(for: template)
             )
         }
     }

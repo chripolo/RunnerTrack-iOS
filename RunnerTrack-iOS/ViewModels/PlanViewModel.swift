@@ -44,7 +44,7 @@ final class PlanViewModel {
         }
     }
 
-    private func storedSession(for template: SessionTemplate) -> TrainingSession? {
+    func storedSession(for template: SessionTemplate) -> TrainingSession? {
         weekSessions.first { Self.dayIndex(of: $0.date) == template.dayIndex }
     }
 
